@@ -1,0 +1,39 @@
+# docker-compose.yaml
+
+version: "3.8"
+
+services:
+  db:
+    build: ./db
+    volumes:
+      - db_data:/var/lib/mysql
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: my_password
+      POSTGRES_DB: my_database
+    networks:
+      - my_network
+
+  app:
+    depends_on:
+      - db
+    build: ./app
+    command: bash -c 'while !</dev/tcp/db/5432; do sleep 1; done; npm start'
+    ports:
+      - "3000:3000"
+    networks:
+      - my_network
+
+  console_app:
+    build: ./console_app
+    depends_on:
+      - app
+    networks:
+      - my_network
+
+networks:
+  my_network:
+    driver: bridge
+
+volumes:
+  db_data:
